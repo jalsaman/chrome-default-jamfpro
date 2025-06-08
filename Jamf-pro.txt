@@ -1,0 +1,92 @@
+# **Adding the Chrome Default Browser Script to Jamf Pro**  
+
+## **Overview**  
+This document explains how to deploy the `chrome.sh` script using **Jamf Pro** to set Google Chrome as the default browser for HTTP/HTTPS protocols on macOS devices.  
+
+---
+
+## **Prerequisites**  
+- **Jamf Pro Admin Access**  
+- **Google Chrome installed** on target devices (`com.google.chrome` must be present)  
+- **Script file** (`chrome.sh`) saved locally  
+
+---
+
+## **Step 1: Upload the Script to Jamf Pro**  
+
+1. **Log in** to your Jamf Pro admin console.  
+2. Navigate to **`Settings`** (⚙️) → **`Computer Management`** → **`Scripts`**.  
+3. Click **`+ New`** to create a new script.  
+4. Fill in the following details:  
+   - **Display Name**: *Set Chrome as Default Browser*  
+   - **Category** (Optional): *Browser Management*  
+   - **Priority**: *After* (default)  
+5. Copy and paste the **script contents** from `chrome.sh` into the script editor.  
+6. Set **Execution Frequency** to *Ongoing* (to ensure compliance).  
+7. Under **Options**, select:  
+   - **Run as logged-in user** (✅ Enabled)  
+   - **Run silently** (✅ Enabled, if desired)  
+8. Click **Save**.  
+
+---
+
+## **Step 2: Create a Policy to Deploy the Script**  
+
+1. Go to **`Computers`** → **`Policies`** → **`+ New`**.  
+2. **General Tab**:  
+   - **Display Name**: *Enforce Chrome as Default Browser*  
+   - **Trigger**: *Recurring Check-In* (or *Login*, *Enrollment*, etc.)  
+   - **Execution Frequency**: *Ongoing* (to reapply if changed)  
+3. **Scripts Tab**:  
+   - Click **`Configure`** → **`Add`** → Select the *Set Chrome as Default Browser* script.  
+   - Ensure **`Run Script`** is set to **`After`** other policies if needed.  
+4. **Scope Tab**:  
+   - **Target Computers**: Select the devices or groups where Chrome should be enforced.  
+5. **Self Service Tab (Optional)**:  
+   - Enable **"Make Available in Self Service"** if users should manually trigger it.  
+6. **Maintenance Tab (Optional)**:  
+   - Enable **"Update Inventory"** to track compliance.  
+7. Click **Save**.  
+
+---
+
+## **Step 3: Verify Deployment**  
+
+1. **Manual Test**:  
+   - Log in to a test Mac and trigger the policy via:  
+     - **Self Service** (if enabled)  
+     - **Terminal**: `sudo jamf policy -id [PolicyID]`  
+   - Check logs:  
+     ```sh
+     cat /tmp/set_chrome_default.log
+     ```  
+   - Verify Chrome is set as default:  
+     ```sh
+     defaults read com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers
+     ```  
+
+2. **Jamf Pro Logs**:  
+   - Check **`Management History`** for the policy execution status.  
+
+---
+
+## **Troubleshooting**  
+- **Script fails**:  
+  - Ensure **Chrome is installed** (`/Applications/Google Chrome.app`).  
+  - Check `/tmp/set_chrome_default.log` for errors.  
+- **Changes don’t apply**:  
+  - Restart Finder manually:  
+    ```sh
+    killall Finder
+    ```  
+  - Rebuild LaunchServices:  
+    ```sh
+    /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -kill -r -domain local -domain system -domain user
+    ```  
+
+---
+
+## **Conclusion**  
+By following these steps, you can enforce Chrome as the default browser across your macOS fleet via Jamf Pro. Adjust **scope** and **triggers** as needed for your environment.  
+
+**📌 Note**: For **user-level defaults**, the script must run in the user context (enabled in Jamf Pro script settings).
